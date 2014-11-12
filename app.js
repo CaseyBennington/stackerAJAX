@@ -2,9 +2,18 @@ $(document).ready( function() {
 	$('.unanswered-getter').submit( function(event){
 		// zero out results if previous search has run
 		$('.results').html('');
+		$('.search-results').html('');
 		// get the value of the tags the user submitted
 		var tags = $(this).find("input[name='tags']").val();
 		getUnanswered(tags);
+	});
+	$('.inspiration-getter').submit( function(event){
+		// zero out results if previous search has run
+		$('.results').html('');
+		$('.search-results').html('');
+		// get the value of the tags the user submitted
+		var tags = $(this).find("input[name='answerers']").val();
+		getInspiration(tags);
 	});
 });
 
@@ -31,16 +40,16 @@ var showQuestion = function(question) {
 
 	// set some properties related to asker
 	var asker = result.find('.asker');
-	asker.html('<p>Name: <a target="_blank" href=http://stackoverflow.com/users/' + question.owner.user_id + ' >' +
-													question.owner.display_name +
-												'</a>' +
-							'</p>' +
- 							'<p>Reputation: ' + question.owner.reputation + '</p>'
+	asker.html('<p>Name: <a target="_blank" href=http://stackoverflow.com/users/' 
+		+ question.owner.user_id + ' >' 
+		+ question.owner.display_name +
+		'</a>' +
+		'</p>' +
+ 		'<p>Reputation: ' + question.owner.reputation + '</p>'
 	);
 
 	return result;
 };
-
 
 // this function takes the results object from StackOverflow
 // and creates info about search results to be appended to DOM
@@ -62,9 +71,9 @@ var getUnanswered = function(tags) {
 	
 	// the parameters we need to pass in our request to StackOverflow's API
 	var request = {tagged: tags,
-								site: 'stackoverflow',
-								order: 'desc',
-								sort: 'creation'};
+					site: 'stackoverflow',
+					order: 'desc',
+					sort: 'creation'};
 	
 	var result = $.ajax({
 		url: "http://api.stackexchange.com/2.2/questions/unanswered",
@@ -88,5 +97,62 @@ var getUnanswered = function(tags) {
 	});
 };
 
+// takes a string of semi-colon separated tags to be searched
+// for on StackOverflow
+var getInspiration = function(tags) {
+	
+	// the parameters we need to pass in our request to StackOverflow's API
+	var request = {tagged: tags,
+					site: 'stackoverflow',
+					order: 'desc',
+					sort: 'score'};
+	
+	var result = $.ajax({
+		url: "http://api.stackexchange.com/2.2/tags/"+tags+"/top-answerers/all_time",
+		data: request,
+		dataType: "jsonp",
+		type: "GET",
+		})
+	.done(function(result){
+		var searchResults = showSearchResults(request.tagged, result.items.length);
 
+		$('.search-results').html(searchResults);
 
+		$.each(result.items, function(i, item) {
+			var score = showScore(item);
+			$('.results').append(score);
+		});
+	})
+	.fail(function(jqXHR, error, errorThrown){
+		var errorElem = showError(error);
+		$('.search-results').append(errorElem);
+	});
+};
+
+// this function takes the score object returned by StackOverflow 
+// and creates new result to be appended to DOM
+var showScore = function(score) {
+	
+	// clone our result template code
+	var result = $('.templates .score').clone();
+	
+	// Set the score properties in result
+	var scoreElem = result.find('.score-number');
+	scoreElem.text(score.score);
+
+	// set the post count property in result
+	var post_count = result.find('.post_count');
+	post_count.text(score.post_count);
+
+	// set some properties related to user
+	var user = result.find('.user');
+	user.html('<p>ID: <a target="_blank" href=http://stackoverflow.com/users/' 
+		+ score.user.user_id + ' >' 
+		+ score.user.display_name +
+		'</a>' +
+		'</p>' +
+ 		'<p>Reputation: ' + score.user.reputation + '</p>'
+	);
+
+	return result;
+};
