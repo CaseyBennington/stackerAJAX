@@ -1,6 +1,8 @@
 stackerAJAX
 ===========
 
-Learn jQuery AJAX Patterns
+jQuery AJAX Patterns
 
-stackoverflow api/ajax example
+Stackoverflow api/ajax example
+
+[See it here.](http://caseybennington.github.io/stackerAJAX/)
